@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardmarket Tracker</title>
     
-    <!-- 🎨 ICONA DELL'APP (Usa la tua immagine su GitHub) -->
+    <!-- 🎨 ICONA DELL'APP CON NOME ESATTO -->
     <link rel="apple-touch-icon" href="Senza titolo.jpg">
     <link rel="icon" type="image/jpeg" href="Senza titolo.jpg">
 
@@ -212,7 +212,7 @@
 
     <script>
         function bypassaBloccoImmagine(url) {
-            if (!url) return "senza titolo.jpg";
+            if (!url) return "Senza titolo.jpg";
             if (url.startsWith("data:image")) return url;
             
             if (url.includes("cardmarket") || url.includes("s3")) {
@@ -239,7 +239,7 @@
 
                 li.innerHTML = `
                     <div class="img-container" onclick="gestisciImmagine(${index})">
-                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='senza titolo.jpg'">
+                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='Senza titolo.jpg'">
                     </div>
                     
                     <div class="info">
