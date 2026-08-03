@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardmarket Tracker</title>
+    
+    <!-- 🎨 ICONA DELL'APP (Usa la tua immagine su GitHub) -->
+    <link rel="apple-touch-icon" href="senza titolo.jpg">
+    <link rel="icon" type="image/jpeg" href="senza titolo.jpg">
+
     <style>
         :root {
             --bg: #121212;
@@ -207,8 +212,7 @@
 
     <script>
         function bypassaBloccoImmagine(url) {
-            if (!url) return "https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto";
-            // Se è già un'immagine incollata direttamente (Base64), restituiscila subito
+            if (!url) return "senza titolo.jpg";
             if (url.startsWith("data:image")) return url;
             
             if (url.includes("cardmarket") || url.includes("s3")) {
@@ -235,7 +239,7 @@
 
                 li.innerHTML = `
                     <div class="img-container" onclick="gestisciImmagine(${index})">
-                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto'">
+                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='senza titolo.jpg'">
                     </div>
                     
                     <div class="info">
@@ -317,10 +321,8 @@
             }
         }
 
-        // FUNZIONE PER LEGGERE L'IMMAGINE INCOLLATA DAGLI APPUNTI
         async function gestisciImmagine(index) {
             try {
-                // Tenta di leggere direttamente dalla memoria di Incolla
                 const clipboardItems = await navigator.clipboard.read();
                 for (const item of clipboardItems) {
                     for (const type of item.types) {
@@ -332,13 +334,11 @@
                     }
                 }
             } catch (err) {
-                // Fallback: se il browser richiede permesso o fallisce, chiede l'URL tramite Pop-up
-                console.log("Lettura diretta appunti non consentita o nessuna immagine diretta, ricorro al prompt:", err);
+                console.log("Ricorro al prompt:", err);
             }
 
-            // Fallback con inserimento manuale link
             const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
-            const urlImg = prompt("Incolla URL dell'immagine (o copia la foto e clicca 'Incolla'):", prodotti[index].immagine || "");
+            const urlImg = prompt("Incolla URL dell'immagine (oppure copia la foto negli appunti prima di cliccare):", prodotti[index].immagine || "");
             if (urlImg !== null) {
                 prodotti[index].immagine = urlImg.trim();
                 localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
@@ -346,7 +346,6 @@
             }
         }
 
-        // Ridimensiona l'immagine incollata per non appesantire il telefono
         function ridimensionaESalvaImmagine(fileBlob, index) {
             const reader = new FileReader();
             reader.onload = function(e) {
