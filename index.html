@@ -94,7 +94,12 @@
             align-items: center;
         }
 
-        /* Stile Immagine */
+        /* Foto Cliccabile */
+        .img-container {
+            position: relative;
+            cursor: pointer;
+        }
+
         .prod-img {
             width: 65px;
             height: 65px;
@@ -102,6 +107,7 @@
             object-fit: cover;
             background-color: #374151;
             flex-shrink: 0;
+            border: 1px solid #4b5563;
         }
 
         .info {
@@ -142,34 +148,43 @@
         .actions {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .btn-open {
             background-color: var(--primary);
             color: white;
             text-decoration: none;
-            padding: 6px 10px;
+            padding: 6px 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             text-align: center;
         }
 
         .btn-edit {
-            background-color: #4b5563;
+            background-color: #10b981;
             color: white;
-            padding: 6px 10px;
+            padding: 6px 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            border: none;
+        }
+
+        .btn-img {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
             border: none;
         }
 
         .btn-delete {
             background-color: var(--danger);
-            padding: 6px 10px;
+            padding: 6px 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             border: none;
         }
     </style>
@@ -183,12 +198,7 @@
         <div class="card">
             <div class="form-group">
                 <input type="text" id="urlInput" placeholder="Link Cardmarket *" />
-                
-                <div class="row-inputs">
-                    <input type="number" step="0.01" id="priceInput" placeholder="Prezzo € (es. 79.50)" />
-                    <input type="text" id="imgInput" placeholder="URL Immagine (opzionale)" />
-                </div>
-
+                <input type="number" step="0.01" id="priceInput" placeholder="Prezzo € (opzionale)" />
                 <button onclick="aggiungiProdotto()">➕ Salva Prodotto</button>
             </div>
         </div>
@@ -217,23 +227,24 @@
 
             prodotti.forEach((item, index) => {
                 const li = document.createElement("li");
-                
-                // Immagine di fallback se non presente
-                const imgUrl = item.immagine || "https://via.placeholder.com/65?text=Card";
+                const imgUrl = item.immagine || "https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto";
 
                 li.innerHTML = `
-                    <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='https://via.placeholder.com/65?text=Card'">
+                    <div class="img-container" onclick="aggiornaImmagine(${index})">
+                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto'">
+                    </div>
                     
                     <div class="info">
                         <span class="nome">${item.nome}</span>
                         <div><span class="badge">${item.lingua}</span></div>
                         <div class="price-tag">${item.prezzo ? item.prezzo + ' €' : 'Prezzo N/D'}</div>
-                        <div class="date-tag">Aggiornato: ${item.data || 'Mai'}</div>
+                        <div class="date-tag">${item.data ? 'Agg: ' + item.data : 'Mai aggiornato'}</div>
                     </div>
 
                     <div class="actions">
                         <a href="${item.url}" target="_blank" class="btn-open">🔍 Apri</a>
-                        <button class="btn-edit" onclick="aggiornaPrezzo(${index})">✏️</button>
+                        <button class="btn-edit" onclick="aggiornaPrezzo(${index})">💶 Prezzo</button>
+                        <button class="btn-img" onclick="aggiornaImmagine(${index})">🖼️ Foto</button>
                         <button class="btn-delete" onclick="rimuoviProdotto(${index})">🗑️</button>
                     </div>
                 `;
@@ -264,40 +275,35 @@
             const mese = String(ora.getMonth() + 1).padStart(2, '0');
             const ore = String(ora.getHours()).padStart(2, '0');
             const minuti = String(ora.getMinutes()).padStart(2, '0');
-            return `${giorno}/${mese} alle ${ore}:${minuti}`;
+            return `${giorno}/${mese} ore ${ore}:${minuti}`;
         }
 
         function aggiungiProdotto() {
             const urlInput = document.getElementById("urlInput");
             const priceInput = document.getElementById("priceInput");
-            const imgInput = document.getElementById("imgInput");
 
             const url = urlInput.value.trim();
             if (!url) {
-                alert("Incolla almeno l'URL di Cardmarket!");
+                alert("Incolla l'URL del prodotto!");
                 return;
             }
 
             const { nome, lingua } = estraiDatiUrl(url);
             const prezzo = priceInput.value ? parseFloat(priceInput.value).toFixed(2) : null;
-            const immagine = imgInput.value.trim();
             const data = prezzo ? ottieniDataOraAttuale() : null;
 
             const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
-            
-            prodotti.push({ nome, lingua, url, prezzo, data, immagine });
+            prodotti.push({ nome, lingua, url, prezzo, data, immagine: null });
             localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
 
-            // Reset campi
             urlInput.value = "";
             priceInput.value = "";
-            imgInput.value = "";
             caricaProdotti();
         }
 
         function aggiornaPrezzo(index) {
             const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
-            const nuovoPrezzo = prompt("Inserisci il nuovo prezzo in €:", prodotti[index].prezzo || "");
+            const nuovoPrezzo = prompt("Nuovo prezzo in €:", prodotti[index].prezzo || "");
 
             if (nuovoPrezzo !== null && nuovoPrezzo.trim() !== "") {
                 prodotti[index].prezzo = parseFloat(nuovoPrezzo.replace(',', '.')).toFixed(2);
@@ -307,8 +313,19 @@
             }
         }
 
+        function aggiornaImmagine(index) {
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+            const urlImg = prompt("Incolla l'URL dell'immagine (es. da Google o Cardmarket):", prodotti[index].immagine || "");
+
+            if (urlImg !== null) {
+                prodotti[index].immagine = urlImg.trim();
+                localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
+                caricaProdotti();
+            }
+        }
+
         function rimuoviProdotto(index) {
-            if (confirm("Vuoi davvero rimuovere questo elemento?")) {
+            if (confirm("Rimuovere questo elemento?")) {
                 const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
                 prodotti.splice(index, 1);
                 localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
