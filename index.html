@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardmarket Tracker</title>
+    <!-- Stile moderno e ottimizzato per Mobile -->
+    <style>
+        :root {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --text: #f3f4f6;
+            --text-secondary: #9ca3af;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            background-color: #2b2b2b;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            background-color: #2b2b2b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 65%;
+        }
+
+        .nome {
+            font-weight: bold;
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #374151;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-open {
+            background-color: #10b981;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .btn-delete {
+            background-color: var(--danger);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎴 Cardmarket Tracker</h1>
+
+        <div class="card">
+            <input type="text" id="urlInput" placeholder="Incolla link Cardmarket..." />
+            <button onclick="aggiungiProdotto()">➕ Aggiungi Prodotto</button>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-between; align-items:center; margin-bottom: 12px;">
+                <span style="font-weight:bold;">I tuoi link salvati</span>
+                <span id="count" class="badge">0</span>
+            </div>
+            <ul id="listaProdotti"></ul>
+        </div>
+    </div>
+
+    <script>
+        function caricaProdotti() {
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
+            const listaElem = document.getElementById("listaProdotti");
+            document.getElementById("count").innerText = prodotti.length;
+            listaElem.innerHTML = "";
+
+            if (prodotti.length === 0) {
+                listaElem.innerHTML = "<p style='color: var(--text-secondary); text-align:center;'>Nessun prodotto salvato.</p>";
+                return;
+            }
+
+            prodotti.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <div class="info">
+                        <span class="nome">${item.nome}</span>
+                        <span class="badge">${item.lingua}</span>
+                    </div>
+                    <div class="actions">
+                        <a href="${item.url}" target="_blank" class="btn-open">🔍 Apri</a>
+                        <button class="btn-delete" onclick="rimuoviProdotto(${index})">🗑️</button>
+                    </div>
+                `;
+                listaElem.appendChild(li);
+            });
+        }
+
+        function estraiDatiUrl(url) {
+            try {
+                const matchLang = url.match(/language=(\d+)/);
+                const langCode = matchLang ? matchLang[1] : "1";
+                const linguaMap = {"1": "EN", "2": "FR", "3": "DE", "4": "ES", "5": "IT"};
+                const lingua = linguaMap[langCode] || "EN";
+
+                const pathParts = new URL(url).pathname.split('/');
+                const slug = pathParts[pathParts.length - 1];
+                const nome = slug.replace(/-/g, ' ');
+
+                return { nome, lingua };
+            } catch (e) {
+                return { nome: "Prodotto Cardmarket", lingua: "EN" };
+            }
+        }
+
+        function aggiungiProdotto() {
+            const input = document.getElementById("urlInput");
+            const url = input.value.trim();
+
+            if (!url) return;
+
+            const { nome, lingua } = estraiDatiUrl(url);
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
+            
+            prodotti.push({ nome, lingua, url });
+            localStorage.setItem("cm_tracker_links", JSON.stringify(prodotti));
+
+            input.value = "";
+            caricaProdotti();
+        }
+
+        function rimuoviProdotto(index) {
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
+            prodotti.splice(index, 1);
+            localStorage.setItem("cm_tracker_links", JSON.stringify(prodotti));
+            caricaProdotti();
+        }
+
+        caricaProdotti();
+    </script>
+</body>
+</html>
