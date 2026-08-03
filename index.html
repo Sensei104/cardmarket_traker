@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardmarket Tracker</title>
     
-    <!-- 🎨 ICONA DELL'APP CON NOME ESATTO -->
-    <link rel="apple-touch-icon" href="Senza titolo.jpg">
-    <link rel="icon" type="image/jpeg" href="Senza titolo.jpg">
+    <!-- 📱 DICHIARAZIONE APP PER SMARTPHONE (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CM Tracker">
+    
+    <!-- 🎨 ICONA SCHERMATA HOME (PULITA SENZA SPAZI) -->
+    <link rel="apple-touch-icon" href="icona.jpg">
+    <link rel="icon" type="image/jpeg" href="icona.jpg">
+    <link rel="shortcut icon" href="icona.jpg">
 
     <style>
         :root {
@@ -212,7 +218,7 @@
 
     <script>
         function bypassaBloccoImmagine(url) {
-            if (!url) return "Senza titolo.jpg";
+            if (!url) return "icona.jpg";
             if (url.startsWith("data:image")) return url;
             
             if (url.includes("cardmarket") || url.includes("s3")) {
@@ -239,7 +245,7 @@
 
                 li.innerHTML = `
                     <div class="img-container" onclick="gestisciImmagine(${index})">
-                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='Senza titolo.jpg'">
+                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='icona.jpg'">
                     </div>
                     
                     <div class="info">
