@@ -63,11 +63,6 @@
             box-sizing: border-box;
         }
 
-        .row-inputs {
-            display: flex;
-            gap: 10px;
-        }
-
         button {
             width: 100%;
             padding: 12px;
@@ -94,7 +89,6 @@
             align-items: center;
         }
 
-        /* Foto Cliccabile */
         .img-container {
             position: relative;
             cursor: pointer;
@@ -194,7 +188,6 @@
     <div class="container">
         <h1>🎴 Cardmarket Tracker</h1>
 
-        <!-- FORM D'INSERIMENTO -->
         <div class="card">
             <div class="form-group">
                 <input type="text" id="urlInput" placeholder="Link Cardmarket *" />
@@ -203,7 +196,6 @@
             </div>
         </div>
 
-        <!-- LISTA PRODOTTI -->
         <div class="card">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 12px;">
                 <span style="font-weight:bold;">I tuoi Prodotti</span>
@@ -214,6 +206,18 @@
     </div>
 
     <script>
+        function bypassaBloccoImmagine(url) {
+            if (!url) return "https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto";
+            // Se è già un'immagine incollata direttamente (Base64), restituiscila subito
+            if (url.startsWith("data:image")) return url;
+            
+            if (url.includes("cardmarket") || url.includes("s3")) {
+                const urlPulito = url.replace(/^https?:\/\//, '');
+                return `https://images.weserv.nl/?url=${encodeURIComponent(urlPulito)}&w=150&h=150&fit=cover`;
+            }
+            return url;
+        }
+
         function caricaProdotti() {
             const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
             const listaElem = document.getElementById("listaProdotti");
@@ -227,10 +231,10 @@
 
             prodotti.forEach((item, index) => {
                 const li = document.createElement("li");
-                const imgUrl = item.immagine || "https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto";
+                const imgUrl = bypassaBloccoImmagine(item.immagine);
 
                 li.innerHTML = `
-                    <div class="img-container" onclick="aggiornaImmagine(${index})">
+                    <div class="img-container" onclick="gestisciImmagine(${index})">
                         <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto'">
                     </div>
                     
@@ -244,7 +248,7 @@
                     <div class="actions">
                         <a href="${item.url}" target="_blank" class="btn-open">🔍 Apri</a>
                         <button class="btn-edit" onclick="aggiornaPrezzo(${index})">💶 Prezzo</button>
-                        <button class="btn-img" onclick="aggiornaImmagine(${index})">🖼️ Foto</button>
+                        <button class="btn-img" onclick="gestisciImmagine(${index})">📋 Foto</button>
                         <button class="btn-delete" onclick="rimuoviProdotto(${index})">🗑️</button>
                     </div>
                 `;
@@ -313,15 +317,57 @@
             }
         }
 
-        function aggiornaImmagine(index) {
-            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
-            const urlImg = prompt("Incolla l'URL dell'immagine (es. da Google o Cardmarket):", prodotti[index].immagine || "");
+        // FUNZIONE PER LEGGERE L'IMMAGINE INCOLLATA DAGLI APPUNTI
+        async function gestisciImmagine(index) {
+            try {
+                // Tenta di leggere direttamente dalla memoria di Incolla
+                const clipboardItems = await navigator.clipboard.read();
+                for (const item of clipboardItems) {
+                    for (const type of item.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await item.getType(type);
+                            ridimensionaESalvaImmagine(blob, index);
+                            return;
+                        }
+                    }
+                }
+            } catch (err) {
+                // Fallback: se il browser richiede permesso o fallisce, chiede l'URL tramite Pop-up
+                console.log("Lettura diretta appunti non consentita o nessuna immagine diretta, ricorro al prompt:", err);
+            }
 
+            // Fallback con inserimento manuale link
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+            const urlImg = prompt("Incolla URL dell'immagine (o copia la foto e clicca 'Incolla'):", prodotti[index].immagine || "");
             if (urlImg !== null) {
                 prodotti[index].immagine = urlImg.trim();
                 localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
                 caricaProdotti();
             }
+        }
+
+        // Ridimensiona l'immagine incollata per non appesantire il telefono
+        function ridimensionaESalvaImmagine(fileBlob, index) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 120;
+                    canvas.height = 120;
+                    ctx.drawImage(img, 0, 0, 120, 120);
+                    
+                    const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+                    prodotti[index].immagine = base64Image;
+                    localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
+                    caricaProdotti();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(fileBlob);
         }
 
         function rimuoviProdotto(index) {
