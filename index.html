@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardmarket Tracker</title>
     
-    <!-- 📱 DICHIARAZIONE APP PER SMARTPHONE (PWA) -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CM Tracker">
+    <!-- 📱 COLLEGAMENTO MANIFEST PWA PER SMARTPHONE -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
     
-    <!-- 🎨 ICONA SCHERMATA HOME (PULITA SENZA SPAZI) -->
-    <link rel="apple-touch-icon" href="icona.jpg">
-    <link rel="icon" type="image/jpeg" href="icona.jpg">
-    <link rel="shortcut icon" href="icona.jpg">
+    <!-- 🎨 ICONE PER SAFARI / CHROME -->
+    <link rel="apple-touch-icon" href="Senza titolo.jpg">
+    <link rel="icon" type="image/jpeg" href="Senza titolo.jpg">
 
     <style>
         :root {
@@ -217,8 +215,10 @@
     </div>
 
     <script>
+        const FALLBACK_IMG = "https://via.placeholder.com/65/374151/FFFFFF?text=📸+Foto";
+
         function bypassaBloccoImmagine(url) {
-            if (!url) return "icona.jpg";
+            if (!url) return FALLBACK_IMG;
             if (url.startsWith("data:image")) return url;
             
             if (url.includes("cardmarket") || url.includes("s3")) {
@@ -245,7 +245,7 @@
 
                 li.innerHTML = `
                     <div class="img-container" onclick="gestisciImmagine(${index})">
-                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='icona.jpg'">
+                        <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='${FALLBACK_IMG}'">
                     </div>
                     
                     <div class="info">
