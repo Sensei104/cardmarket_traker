@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardmarket Tracker</title>
-    <!-- Stile moderno e ottimizzato per Mobile -->
     <style>
         :root {
             --bg: #121212;
             --card-bg: #1e1e1e;
             --primary: #3b82f6;
+            --success: #10b981;
             --danger: #ef4444;
             --text: #f3f4f6;
             --text-secondary: #9ca3af;
@@ -46,6 +46,12 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         input {
             width: 100%;
             padding: 12px;
@@ -53,9 +59,13 @@
             border: 1px solid #374151;
             background-color: #2b2b2b;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             box-sizing: border-box;
-            margin-bottom: 10px;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 10px;
         }
 
         button {
@@ -68,34 +78,37 @@
             font-weight: bold;
             font-size: 1rem;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
 
-        button:active {
-            opacity: 0.8;
-        }
+        button:active { opacity: 0.8; }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+        ul { list-style: none; padding: 0; margin: 0; }
 
         li {
             background-color: #2b2b2b;
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
-            justify-content: space-between;
+            gap: 12px;
             align-items: center;
+        }
+
+        /* Stile Immagine */
+        .prod-img {
+            width: 65px;
+            height: 65px;
+            border-radius: 8px;
+            object-fit: cover;
+            background-color: #374151;
+            flex-shrink: 0;
         }
 
         .info {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            max-width: 65%;
+            flex-grow: 1;
         }
 
         .nome {
@@ -114,27 +127,50 @@
             width: fit-content;
         }
 
+        .price-tag {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: var(--success);
+            margin-top: 2px;
+        }
+
+        .date-tag {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
         .actions {
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .btn-open {
-            background-color: #10b981;
+            background-color: var(--primary);
             color: white;
             text-decoration: none;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: bold;
+            text-align: center;
+        }
+
+        .btn-edit {
+            background-color: #4b5563;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: none;
         }
 
         .btn-delete {
             background-color: var(--danger);
-            padding: 8px 10px;
+            padding: 6px 10px;
             border-radius: 6px;
-            font-size: 0.85rem;
-            width: auto;
+            font-size: 0.8rem;
+            border: none;
         }
     </style>
 </head>
@@ -143,14 +179,24 @@
     <div class="container">
         <h1>🎴 Cardmarket Tracker</h1>
 
+        <!-- FORM D'INSERIMENTO -->
         <div class="card">
-            <input type="text" id="urlInput" placeholder="Incolla link Cardmarket..." />
-            <button onclick="aggiungiProdotto()">➕ Aggiungi Prodotto</button>
+            <div class="form-group">
+                <input type="text" id="urlInput" placeholder="Link Cardmarket *" />
+                
+                <div class="row-inputs">
+                    <input type="number" step="0.01" id="priceInput" placeholder="Prezzo € (es. 79.50)" />
+                    <input type="text" id="imgInput" placeholder="URL Immagine (opzionale)" />
+                </div>
+
+                <button onclick="aggiungiProdotto()">➕ Salva Prodotto</button>
+            </div>
         </div>
 
+        <!-- LISTA PRODOTTI -->
         <div class="card">
-            <div style="display:flex; justify-between; align-items:center; margin-bottom: 12px;">
-                <span style="font-weight:bold;">I tuoi link salvati</span>
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 12px;">
+                <span style="font-weight:bold;">I tuoi Prodotti</span>
                 <span id="count" class="badge">0</span>
             </div>
             <ul id="listaProdotti"></ul>
@@ -159,7 +205,7 @@
 
     <script>
         function caricaProdotti() {
-            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
             const listaElem = document.getElementById("listaProdotti");
             document.getElementById("count").innerText = prodotti.length;
             listaElem.innerHTML = "";
@@ -171,13 +217,23 @@
 
             prodotti.forEach((item, index) => {
                 const li = document.createElement("li");
+                
+                // Immagine di fallback se non presente
+                const imgUrl = item.immagine || "https://via.placeholder.com/65?text=Card";
+
                 li.innerHTML = `
+                    <img src="${imgUrl}" class="prod-img" alt="Foto" onerror="this.src='https://via.placeholder.com/65?text=Card'">
+                    
                     <div class="info">
                         <span class="nome">${item.nome}</span>
-                        <span class="badge">${item.lingua}</span>
+                        <div><span class="badge">${item.lingua}</span></div>
+                        <div class="price-tag">${item.prezzo ? item.prezzo + ' €' : 'Prezzo N/D'}</div>
+                        <div class="date-tag">Aggiornato: ${item.data || 'Mai'}</div>
                     </div>
+
                     <div class="actions">
                         <a href="${item.url}" target="_blank" class="btn-open">🔍 Apri</a>
+                        <button class="btn-edit" onclick="aggiornaPrezzo(${index})">✏️</button>
                         <button class="btn-delete" onclick="rimuoviProdotto(${index})">🗑️</button>
                     </div>
                 `;
@@ -202,27 +258,62 @@
             }
         }
 
-        function aggiungiProdotto() {
-            const input = document.getElementById("urlInput");
-            const url = input.value.trim();
+        function ottieniDataOraAttuale() {
+            const ora = new Date();
+            const giorno = String(ora.getDate()).padStart(2, '0');
+            const mese = String(ora.getMonth() + 1).padStart(2, '0');
+            const ore = String(ora.getHours()).padStart(2, '0');
+            const minuti = String(ora.getMinutes()).padStart(2, '0');
+            return `${giorno}/${mese} alle ${ore}:${minuti}`;
+        }
 
-            if (!url) return;
+        function aggiungiProdotto() {
+            const urlInput = document.getElementById("urlInput");
+            const priceInput = document.getElementById("priceInput");
+            const imgInput = document.getElementById("imgInput");
+
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert("Incolla almeno l'URL di Cardmarket!");
+                return;
+            }
 
             const { nome, lingua } = estraiDatiUrl(url);
-            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
-            
-            prodotti.push({ nome, lingua, url });
-            localStorage.setItem("cm_tracker_links", JSON.stringify(prodotti));
+            const prezzo = priceInput.value ? parseFloat(priceInput.value).toFixed(2) : null;
+            const immagine = imgInput.value.trim();
+            const data = prezzo ? ottieniDataOraAttuale() : null;
 
-            input.value = "";
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+            
+            prodotti.push({ nome, lingua, url, prezzo, data, immagine });
+            localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
+
+            // Reset campi
+            urlInput.value = "";
+            priceInput.value = "";
+            imgInput.value = "";
             caricaProdotti();
         }
 
+        function aggiornaPrezzo(index) {
+            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+            const nuovoPrezzo = prompt("Inserisci il nuovo prezzo in €:", prodotti[index].prezzo || "");
+
+            if (nuovoPrezzo !== null && nuovoPrezzo.trim() !== "") {
+                prodotti[index].prezzo = parseFloat(nuovoPrezzo.replace(',', '.')).toFixed(2);
+                prodotti[index].data = ottieniDataOraAttuale();
+                localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
+                caricaProdotti();
+            }
+        }
+
         function rimuoviProdotto(index) {
-            const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links")) || [];
-            prodotti.splice(index, 1);
-            localStorage.setItem("cm_tracker_links", JSON.stringify(prodotti));
-            caricaProdotti();
+            if (confirm("Vuoi davvero rimuovere questo elemento?")) {
+                const prodotti = JSON.parse(localStorage.getItem("cm_tracker_links_v2")) || [];
+                prodotti.splice(index, 1);
+                localStorage.setItem("cm_tracker_links_v2", JSON.stringify(prodotti));
+                caricaProdotti();
+            }
         }
 
         caricaProdotti();
